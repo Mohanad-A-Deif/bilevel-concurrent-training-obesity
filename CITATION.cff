@@ -1,0 +1,15 @@
+cff-version: 1.2.0
+message: "If you use this code, please cite the associated article."
+title: "Personalized Concurrent Resistance-Endurance Training in Obesity: A Bilevel Framework for Dose and Sequence Optimization - code and data"
+authors:
+  - family-names: Deif
+    given-names: Mohanad A.
+  - family-names: Elhaty
+    given-names: Ismail A.
+  - family-names: Hafez
+    given-names: Mohamed A.
+  - family-names: Khishe
+    given-names: Mohammad
+license: MIT
+version: 1.0.0
+date-released: 2026-10-16
