@@ -68,26 +68,33 @@ def cases(R):
 
 
 if __name__ == "__main__":
+    import analyze_extra as X
     T_DIR.mkdir(parents=True, exist_ok=True)
-    R = load("main")
-    main_table(R).to_csv(T_DIR / "table09_population_benchmark.csv", index=False)
-    paired(R).to_csv(T_DIR / "table10_paired_differences.csv", index=False)
-    ablation_table(load("ablation")).to_csv(T_DIR / "table11_ablation.csv", index=False)
-    tie_table().to_csv(T_DIR / "table12_tie_sensitivity.csv", index=False)
-    json.dump(computational(R), open(T_DIR / "table13_computational.json", "w"), indent=1)
-    s7_table(R).to_csv(T_DIR / "table14_s7.csv", index=False)
-    robustness(R).to_csv(T_DIR / "table15_robustness.csv", index=False)
-    cases(R).to_csv(T_DIR / "table16_case_studies.csv", index=False)
+    R = load("main"); main = {r["pid"]: r for r in R}
+    main_table(R).to_csv(T_DIR / "table10_population_benchmark.csv", index=False)
+    paired(R).to_csv(T_DIR / "table11_paired_differences.csv", index=False)
+    ablation_table(load("ablation")).to_csv(T_DIR / "table12_ablation.csv", index=False)
+    tie_table().to_csv(T_DIR / "table13_tie_sensitivity.csv", index=False)
+    comp = computational(R); comp["stage_contribution"] = {k: float(v) for k, v in X.stage_contrib(R).items()}
+    json.dump(comp, open(T_DIR / "table14_computational.json", "w"), indent=1)
+    X.bench_table(main)[0].to_csv(T_DIR / "table15_solver_benchmark.csv", index=False)
+    X.kkt_table(main).to_csv(T_DIR / "table16_kkt_bounds.csv", index=False)
+    X.latent_table().to_csv(T_DIR / "table17_latent_sensitivity.csv", index=False)
+    s7_table(R).to_csv(T_DIR / "table18_s7.csv", index=False)
+    robustness(R).to_csv(T_DIR / "table19_robustness.csv", index=False)
+    cases(R).to_csv(T_DIR / "table20_case_studies.csv", index=False)
+    X.reweighted(R).to_csv(T_DIR / "reweighted_comparisons.csv", index=False)
+    json.dump(X.structure(R), open(T_DIR / "prescription_structure.json", "w"), indent=1, default=float)
     json.dump({k: float(v) if not isinstance(v, int) else v for k, v in sequence_stats(R).items()},
               open(T_DIR / "sequence_counts.json", "w"), indent=1)
-    cohort_fidelity().to_csv(T_DIR / "tableS_cohort_fidelity.csv", index=False)
-    margins(R).to_csv(T_DIR / "tableS_constraint_margins.csv", index=False)
+    cohort_fidelity().to_csv(T_DIR / "tableS6_cohort_fidelity.csv", index=False)
+    margins(R).to_csv(T_DIR / "tableS7_constraint_margins.csv", index=False)
     q, M, _ = convergence(R)
-    pd.DataFrame({"evaluation": np.arange(1, q.shape[1] + 1), "q25": q[0], "median": q[1], "q75": q[2],
-                  "running": [(np.array([r["search"]["k"] for r in R]) >= e).sum() for e in range(1, q.shape[1] + 1)]}
+    pd.DataFrame({"evaluation": np.arange(1, q.shape[1] + 1), "q25": q[0], "median": q[1], "q75": q[2]}
                  ).to_csv(T_DIR / "figure4_convergence.csv", index=False)
     for s in ["proposed", "population_average", "heuristic"]:
         d, a, f = weekly(R, s)
-        pd.DataFrame({"week": np.arange(1, len(d) + 1), "dose": d, "adherence": a, "fatigue": f}).to_csv(
+        al = np.array([r[s]["alpha"] for r in R]).mean(0)
+        pd.DataFrame({"week": np.arange(1, len(d) + 1), "dose": d, "alpha": al, "adherence": a, "fatigue": f}).to_csv(
             T_DIR / f"figures2_3_weekly_{s}.csv", index=False)
     print("tables written to", T_DIR)

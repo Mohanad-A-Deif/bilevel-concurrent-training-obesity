@@ -477,6 +477,63 @@ class Search:
         return self
 
 
+def refine_cma(S, budget, sigma0=0.10, seed=None):
+    """CMA-ES refinement of the incumbent of a completed surrogate-assisted search S.
+    Continuous variables are searched in the scaled box [0,1]^{2T}; each weekly
+    (q_t, o_t) pattern is encoded by one coordinate in [0,1] split into three equal
+    intervals. Every candidate is repaired and evaluated exactly, and the search
+    statistics, incumbent and trace of S are updated in place."""
+    import cma
+    if S.best is None or S.k >= budget:
+        S.k2 = 0
+        return S
+    t0 = time.perf_counter()
+    e = encode(S.p, S.best)
+    pat = np.where(e[2 * T:3 * T] == 0, 0, np.where(e[3 * T:] == 0, 1, 2))
+    z0 = np.concatenate([np.clip(e[:2 * T], 0, 1), (pat + 0.5) / 3.0])
+    opts = {"bounds": [0, 1], "seed": int((S.seed if seed is None else seed) % (2 ** 31 - 1)) + 1,
+            "verbose": -9, "tolfun": 1e-9, "tolx": 1e-7}
+    es = cma.CMAEvolutionStrategy(z0, sigma0, opts)
+    k2 = 0
+    while S.k < budget and not es.stop():
+        Zs = es.ask()
+        F = []
+        for z in Zs:
+            if S.k >= budget:
+                break
+            z = np.clip(np.asarray(z, float), 0, 1)
+            pp = np.minimum((z[2 * T:] * 3).astype(int), 2)
+            qo = PATTERNS[pp]
+            x = S._fix(decode(S.p, np.concatenate([z[:2 * T], qo[:, 0], qo[:, 1]])))
+            o = evaluate(S.p, x, S.w, S.stats)
+            S.k += 1; k2 += 1
+            if not o["ok"]:
+                fit = -10.0
+            elif o["feasible"]:
+                fit = o["J"]
+                if fit > S.bestJ:
+                    S.bestJ, S.best, S.best_eval, S.best_out = fit, x, S.k, o
+            else:
+                fit = o["J"] - 1.0 - 10.0 * (S.p["abar"] - o["mean_a"])
+            S.trace.append(S.bestJ)
+            F.append(-fit)
+        if len(F) < len(Zs):
+            break
+        es.tell(Zs, F)
+    S.k2 = k2
+    S.stop2 = "budget" if S.k >= budget else "cma_stop"
+    S.runtime += time.perf_counter() - t0
+    return S
+
+
+def search_hybrid(p, w, seed, budget=2500, **kw):
+    """Two-stage upper-level search: warm-started random-forest surrogate-assisted
+    stage (Algorithm 1) followed by CMA-ES refinement of its incumbent."""
+    S = Search(p, w, seed, **kw).run()
+    S.k1, S.stop1 = S.k, S.stop
+    return refine_cma(S, budget)
+
+
 def average_participant(P):
     keys = PARAM_KEYS + BOUND_KEYS
     return {k: float(P[k].mean()) for k in keys}

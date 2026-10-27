@@ -1,0 +1,29 @@
+{
+ "proposed": {
+  "mean_d": 1.0703747154166667,
+  "mean_alpha": 0.6133167977083334,
+  "alpha_first4": 0.6122684366666666,
+  "alpha_last4": 0.58487769,
+  "alpha_sd_within": 0.05750941076883035,
+  "d_first": 0.8396838366666666,
+  "d_last": 1.10770189
+ },
+ "heuristic": {
+  "mean_d": 1.0345358245833334,
+  "mean_alpha": 0.5,
+  "alpha_first4": 0.5,
+  "alpha_last4": 0.5,
+  "alpha_sd_within": 0.0,
+  "d_first": 0.80468087,
+  "d_last": 1.11120584
+ },
+ "population_average": {
+  "mean_d": 0.9499855768750002,
+  "mean_alpha": 0.6326331250000001,
+  "alpha_first4": 0.6564475,
+  "alpha_last4": 0.5585650000000001,
+  "alpha_sd_within": 0.05796171740023215,
+  "d_first": 0.7491807166666666,
+  "d_last": 0.9804179766666666
+ }
+}

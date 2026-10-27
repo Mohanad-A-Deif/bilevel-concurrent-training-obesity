@@ -17,6 +17,17 @@ PY
 python run.py ablation 0 500          # 4. ablations on the 500-participant subset
 python sensitivity.py                 # 5. optimistic-selection sensitivity analysis
 python slack_check.py                 #    epigraph slack and reduced-Hessian tolerance checks
+python cohort_diag.py                 #    synthetic-cohort fidelity diagnostics
+python reweight.py                    #    density-ratio weights toward the calibration cohort
+for m in ga_warm tpe_warm cma_warm ga_cold tpe_cold cma_cold; do
+  python bench.py $m 0 204 250        #    upper-level solver benchmark (250 evaluations)
+done
+python bench.py ga_warm 0 204 1000    #    benchmark at the full budget
+python bench.py cma_warm 0 204 1000
+python kkt_cases.py                   #    KKT reformulation (SCIP) for the case-study participants
+for v in slope0 slope1.5 noise0.5 noise2 mapping0.5; do
+  python sens_latent.py $v 54         #    latent-trait generation sensitivity
+done
 python consolidate.py                 # 6. pack per-participant records
 python make_tables.py                 # 7. all tables (outputs/tables)
 python figures.py                     # 8. Figures 2-6 (figures/)

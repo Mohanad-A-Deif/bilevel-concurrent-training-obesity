@@ -1,0 +1,48 @@
+{
+ "n": 3000,
+ "median_evals_total": 1000.0,
+ "mean_evals_total": 1000.0,
+ "median_best_eval": 969.0,
+ "mean_best_eval": 951.3686666666666,
+ "sd_best_eval": 53.83335485477873,
+ "stop": {
+  "stagnation": 2968,
+  "budget": 32
+ },
+ "qp": {
+  "n": 3000000,
+  "optimal": 3000000,
+  "optimal_inaccurate": 0,
+  "failed": 0,
+  "flagged": 2998726,
+  "tie_ok": 2990787,
+  "tie_fallback": 7939
+ },
+ "median_qp_ms": 0.7167527505771432,
+ "median_search_s": 13.504400490997796,
+ "p95_search_s": 17.693079566198683,
+ "serial_hours": 11.685536308744975,
+ "dJ_max": 0.0013633611813885782,
+ "dJ_median_of_medians": 0.000403304378106345,
+ "dJ_gt_1e6": 2990785,
+ "final_flagged": 3000,
+ "final_tie": {
+  "ok": 2999,
+  "fallback": 1
+ },
+ "median_k1": 90.0,
+ "stop2": {
+  "budget": 3000
+ },
+ "best_in_stage2_pct": 100.0,
+ "stage_contribution": {
+  "stage1_mean": 1.0055305706666666,
+  "final_mean": 1.038061236576331,
+  "heur_mean": 1.0041026372507167,
+  "stage2_gain_mean": 0.03253066590966438,
+  "stage2_gain_rel_pct": 3.2351742312614675,
+  "pct_improved_stage2": 100.0,
+  "stage1_eq_rule_pct": 80.43333333333334,
+  "final_eq_rule_pct": 0.0
+ }
+}

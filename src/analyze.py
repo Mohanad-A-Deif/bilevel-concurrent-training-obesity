@@ -65,11 +65,14 @@ def computational(R):
                serial_hours=float(wall.sum() / 3600),
                dJ_max=float(max(s["dJ_max"] for s in S)), dJ_median_of_medians=float(np.median([s["dJ_median"] for s in S])),
                dJ_gt_1e6=int(sum(s["dJ_gt_1e6"] for s in S)),
-               final_flagged=finflag, final_tie=fin.to_dict())
+               final_flagged=finflag, final_tie=fin.to_dict(),
+               median_k1=float(np.median([s.get("k1", s["k"]) for s in S])),
+               stop2=pd.Series([s.get("stop2") for s in S]).value_counts().to_dict(),
+               best_in_stage2_pct=float(100 * np.mean([s["best_eval"] > s.get("k1", s["k"]) for s in S])))
     return out
 
 
-def convergence(R, n_max=250):
+def convergence(R, n_max=1000):
     M = np.full((len(R), n_max), np.nan)
     for i, r in enumerate(R):
         tr = np.array([np.nan if v is None else v for v in r["search"]["trace"]], float)

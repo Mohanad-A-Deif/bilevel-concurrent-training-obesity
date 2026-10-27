@@ -24,13 +24,20 @@ def style(ax):
 
 
 def fig_dose(R):
-    fig, ax = plt.subplots(figsize=(8, 4.2))
+    fig, axs = plt.subplots(1, 2, figsize=(11, 4.6))
     for s in COL:
-        d, _, _ = weekly(R, s)
-        ax.plot(weeks, d, LS[s], color=COL[s], marker=MRK[s], ms=5, lw=1.6, label=LAB[s])
-    ax.set_xlabel("Week"); ax.set_ylabel("Mean prescribed weekly dose (normalized)")
-    ax.set_xticks(weeks); ax.set_xlim(1, T); style(ax); ax.legend(frameon=True, fontsize=10)
-    fig.tight_layout(); fig.savefig(f"{FIG}/dose_trajectory.png"); plt.close(fig)
+        d = np.array([r[s]["d"] for r in R]).mean(0)
+        al = np.array([r[s]["alpha"] for r in R]).mean(0)
+        axs[0].plot(weeks, d, LS[s], color=COL[s], marker=MRK[s], ms=5, lw=1.6, label=LAB[s])
+        axs[1].plot(weeks, al, LS[s], color=COL[s], marker=MRK[s], ms=5, lw=1.6, label=LAB[s])
+    axs[0].set_ylabel("Mean prescribed weekly dose (normalized)")
+    axs[1].set_ylabel("Mean resistance share $\\alpha_t$")
+    for ax, t in zip(axs, ["(a) Weekly dose", "(b) Resistance share"]):
+        ax.set_xlabel("Week"); ax.set_xticks(weeks[::2]); ax.set_xlim(1, T); style(ax)
+        ax.set_title(t, loc="left", fontsize=11)
+    h, l = axs[0].get_legend_handles_labels()
+    fig.legend(h, l, loc="lower center", ncol=3, frameon=False, fontsize=10)
+    fig.tight_layout(rect=(0, 0.07, 1, 1)); fig.savefig(f"{FIG}/dose_trajectory.png"); plt.close(fig)
 
 
 def fig_states(R):
@@ -63,9 +70,10 @@ def fig_conv(R):
     ax.plot(ev[2:], g[1][2:], color="#000000", lw=1.8, label="Median")
     ax.plot(ev[2:], g[3][2:], ":", color="#8B0000", lw=1.6, label="90th percentile")
     ax.set_ylabel("Gain over best rule-based start")
-    ax.set_title("(b) Improvement beyond warm-start designs", loc="left", fontsize=11)
+    ax.set_title("(b) Improvement beyond rule-based designs", loc="left", fontsize=11)
     for ax in axs:
         ax.axvline(40, color="#006400", ls="--", lw=1.0)
+        ax.axvline(90, color="#8B0000", ls=":", lw=1.0)
         ax.set_xlabel("Exact upper-level evaluation"); ax.set_xlim(1, q.shape[1]); style(ax)
         ax.legend(frameon=True, fontsize=9, loc="lower right")
     fig.tight_layout(); fig.savefig(f"{FIG}/objective_convergence.png"); plt.close(fig)

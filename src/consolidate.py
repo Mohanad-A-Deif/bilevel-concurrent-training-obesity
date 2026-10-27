@@ -12,3 +12,19 @@ if __name__ == "__main__":
             for f in files:
                 fh.write(json.dumps(json.load(open(f))) + "\n")
         print(kind, len(files))
+    import os
+    n = 0
+    with gzip.open(OUT_DIR / "bench_results.jsonl.gz", "wt") as fh:
+        for d in sorted(glob.glob(str(OUT_DIR / "bench" / "*"))):
+            tag = os.path.basename(d)
+            if tag.startswith("kkt_"):
+                continue
+            for f in sorted(glob.glob(d + "/*.json")):
+                r = json.load(open(f)); r["tag"] = tag
+                fh.write(json.dumps(r) + "\n"); n += 1
+    print("bench", n)
+    n = 0
+    with gzip.open(OUT_DIR / "sens_latent_results.jsonl.gz", "wt") as fh:
+        for f in sorted(glob.glob(str(OUT_DIR / "sens_latent" / "*" / "[0-9]*.json"))):
+            fh.write(json.dumps(json.load(open(f))) + "\n"); n += 1
+    print("sens_latent", n)

@@ -9,13 +9,14 @@ import sys, os, json, time
 import numpy as np
 import pandas as pd
 from multiprocessing import Pool
-from model import (T, Search, weights, repair, evaluate, Stats, average_participant, COEF_KEYS,
+from model import (T, Search, search_hybrid, weights, repair, evaluate, Stats, average_participant, COEF_KEYS,
                    PARAM_KEYS, iR, iE, iD, ia, i_f, im, ih)
 from cohort import CONST
 
 OUT = str(config.OUT_DIR)
 REFIT = 5
 W_STAG = 50
+BUDGET = 1000
 P = pd.read_csv(f"{OUT}/participants.csv")
 W = weights()
 
@@ -110,7 +111,7 @@ def baselines(p, pid, xpop):
     return out
 
 
-def random_feasible(p, pid, K=250):
+def random_feasible(p, pid, K=BUDGET):
     rng = np.random.default_rng(seed_of(pid) + 17)
     st = Stats()
     best, bestJ, bestx, besto = None, -np.inf, None, None
@@ -138,8 +139,8 @@ def run_main(i):
         return pid
     p = pdict(i)
     t0 = time.perf_counter()
-    S = Search(p, W, seed=seed_of(pid), refit_every=REFIT, w_stag=W_STAG,
-               seeds=rule_seeds(p), struct_moves=True).run()
+    S = search_hybrid(p, W, seed=seed_of(pid), budget=BUDGET, refit_every=REFIT, w_stag=W_STAG,
+                      seeds=rule_seeds(p), struct_moves=True)
     rec = {"pid": pid}
     if S.best is not None:
         xb = S.best
@@ -151,6 +152,7 @@ def run_main(i):
     dJ = np.abs(np.array(S.stats.dJ)) if S.stats.dJ else np.zeros(1)
     rec["proposed"] = pack(p, xb, ob)
     rec["search"] = dict(k=S.k, best_eval=S.best_eval, stop=S.stop, restarts=S.restarts, runtime=S.runtime,
+                         k1=S.k1, k2=S.k2, stop2=getattr(S, "stop2", None),
                          qp=S.stats.as_dict(), qp_time_median=float(np.median(S.stats.qp_time)),
                          dJ_max=float(dJ.max()), dJ_median=float(np.median(dJ)),
                          dJ_gt_1e6=int((dJ > 1e-6).sum()), trace=[None if not np.isfinite(v) else round(v, 6) for v in S.trace])
@@ -199,8 +201,8 @@ def run_ablation(i):
         "without_regularization": (p, weights(noreg=True), None),
     }
     for name, (pv, wv, fixed) in variants.items():
-        S = Search(pv, wv, seed=seed_of(pid), refit_every=REFIT, w_stag=W_STAG, binaries_fixed=fixed,
-                   seeds=rule_seeds(pv), struct_moves=True).run()
+        S = search_hybrid(pv, wv, seed=seed_of(pid), budget=BUDGET, refit_every=REFIT, w_stag=W_STAG,
+                          binaries_fixed=fixed, seeds=rule_seeds(pv), struct_moves=True)
         if S.best is None:
             from model import decode
             Jv = np.array(S.Jv); j = int(np.nanargmax(Jv)); xb = repair(pv, decode(pv, S.Z[j]))
@@ -217,7 +219,8 @@ def run_ablation(i):
 
 def run_popavg():
     pa = average_participant(P)
-    S = Search(pa, W, seed=42, refit_every=REFIT, w_stag=W_STAG, seeds=rule_seeds(pa), struct_moves=True).run()
+    S = search_hybrid(pa, W, seed=42, budget=BUDGET, refit_every=REFIT, w_stag=W_STAG, seeds=rule_seeds(pa),
+                      struct_moves=True)
     json.dump({"x": [np.asarray(v).tolist() for v in S.best], "J": S.bestJ, "k": S.k, "stop": S.stop,
                "p": pa}, open(f"{OUT}/popavg.json", "w"), indent=1)
     print("popavg", S.bestJ, S.k, S.stop)
